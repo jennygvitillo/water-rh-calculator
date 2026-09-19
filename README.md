@@ -26,6 +26,9 @@ Wagner, W.; Pruß, A. *J. Phys. Chem. Ref. Data* **1993**, *22*, 783–787.
 
 Valid between 0.01 °C and 373.9 °C. Below 0 °C, dew/frost point inputs use the Buck (1996) ice saturation formula instead.
 
+Physics & math behind the calculations - [THEORY](THEORY.md)
+
+
 ## Citation
 
 If you use this tool in a publication, please cite it as:
