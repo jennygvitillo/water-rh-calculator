@@ -6,11 +6,11 @@ A simple browser tool to calculate water vapor saturation pressure (p_sat) and r
 
 No installation needed — this is a single, self-contained HTML file.
 
-1. Download `index.html` from this repository
+1. Download `water_psat_rh_calculator_jv.html` from this repository
 2. Double-click it, or open it with any web browser (Chrome, Firefox, Safari, Edge)
 3. That's it — everything runs locally in your browser, no internet connection needed after the first load
 
-Or, if this repository is hosted via GitHub Pages, just open: `https://<username>.github.io/<repo-name>/`
+Or, if this repository is hosted via GitHub Pages, just open: `(https://github.com/jennygvitillo/water-rh-calculator/`
 
 ## What it does
 
