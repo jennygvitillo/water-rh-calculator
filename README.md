@@ -10,7 +10,7 @@ No installation needed — this is a single, self-contained HTML file.
 2. Double-click it, or open it with any web browser (Chrome, Firefox, Safari, Edge)
 3. That's it — everything runs locally in your browser, no internet connection needed after the first load
 
-Or, if this repository is hosted via GitHub Pages, just open: https://jennygvitillo.github.io/water-rh-calculator/
+Or just open: https://jennygvitillo.github.io/water-rh-calculator/
 
 ## What it does
 
