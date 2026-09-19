@@ -30,7 +30,7 @@ Valid between 0.01 °C and 373.9 °C. Below 0 °C, dew/frost point inputs use th
 
 If you use this tool in a publication, please cite it as:
 
-> [Your name], *[Tool name]* (GitHub repository), [year]. [DOI or URL]
+> Jenny G. Vitillo, jennygvitillo/water-rh-calculator (GitHub repository), 2026. DOI: https://doi.org/10.5281/zenodo.22843285
 
 ## License
 
