@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Water p_sat / RH% Calculator - IAPWS</title>
+<style>
+:root{
+  --bg:#ffffff; --card:#f7f7f5; --border:#dcdcd6; --border-strong:#b8b8b0;
+  --text:#1a1a18; --text-secondary:#5c5c56; --text-muted:#8a8a82;
+  --accent:#185fa5; --accent-bg:#e6f1fb; --accent-text:#0c447c;
+  --danger:#a32d2d; --danger-bg:#fcebeb;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151513; --card:#1f1f1c; --border:#3a3a35; --border-strong:#54544d;
+    --text:#f0f0ec; --text-secondary:#b8b8b0; --text-muted:#8a8a82;
+    --accent:#85b7eb; --accent-bg:#0c447c; --accent-text:#e6f1fb;
+    --danger:#f09595; --danger-bg:#501313;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151513; --card:#1f1f1c; --border:#3a3a35; --border-strong:#54544d;
+  --text:#f0f0ec; --text-secondary:#b8b8b0; --text-muted:#8a8a82;
+  --accent:#85b7eb; --accent-bg:#0c447c; --accent-text:#e6f1fb;
+  --danger:#f09595; --danger-bg:#501313;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);
+  padding:1.25rem;max-width:520px;margin:0 auto;line-height:1.5;}
+h1{font-size:19px;font-weight:600;margin:0 0 4px;}
+.subtitle{font-size:13px;color:var(--text-secondary);margin:0 0 1.25rem;}
+.tabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap;}
+.tab{flex:1;min-width:90px;padding:9px 4px;text-align:center;border:0.5px solid var(--border);
+  border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;
+  background:var(--card);color:var(--text-secondary);}
+.tab.active{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent);}
+.card{background:var(--card);border:0.5px solid var(--border);border-radius:12px;
+  padding:1rem 1.1rem;margin-bottom:1rem;}
+label{display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;}
+.row{display:flex;gap:8px;margin-bottom:0.9rem;align-items:flex-end;}
+.field{flex:1;}
+input[type=number], select{
+  width:100%;padding:9px 10px;border-radius:8px;border:0.5px solid var(--border-strong);
+  background:var(--bg);color:var(--text);font-size:15px;
+}
+input[type=number]:focus, select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+button{width:100%;padding:11px;border-radius:10px;border:none;background:var(--accent);
+  color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;}
+button.secondary{background:var(--card);color:var(--text);border:0.5px solid var(--border-strong);}
+button:active{opacity:0.85;}
+.result{margin-top:1rem;padding:1rem;border-radius:10px;background:var(--accent-bg);
+  color:var(--accent-text);display:none;}
+.result.show{display:block;}
+.result .big{font-size:22px;font-weight:700;margin-bottom:4px;}
+.result .line{font-size:13px;margin:2px 0;}
+.error{margin-top:0.6rem;padding:0.7rem;border-radius:8px;background:var(--danger-bg);
+  color:var(--danger);font-size:13px;display:none;}
+.error.show{display:block;}
+.note{font-size:11.5px;color:var(--text-muted);margin-top:1rem;line-height:1.5;}
+.hidden{display:none;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th,td{padding:5px 6px;text-align:right;border-bottom:0.5px solid var(--border);}
+th:first-child,td:first-child{text-align:left;}
+th{color:var(--text-secondary);font-weight:500;}
+.tablewrap{max-height:260px;overflow-y:auto;margin-top:0.8rem;border:0.5px solid var(--border);border-radius:8px;}
+.credits{font-size:11px;color:var(--text-muted);text-align:center;margin-top:1.5rem;padding-top:1rem;border-top:0.5px solid var(--border);}
+</style>
+</head>
+<body>
+<h1>Water vapor saturation pressure &amp; RH% calculator</h1>
+<p class="subtitle">IAPWS formulation (Wagner &amp; Pruss, 1993) - valid 0.01-373.9 &deg;C</p>
+
+<div class="tabs">
+  <div class="tab active" id="tabPsat" onclick="switchTab('psat')">p_sat(T)</div>
+  <div class="tab" id="tabRh" onclick="switchTab('rh')">RH%</div>
+  <div class="tab" id="tabBatch" onclick="switchTab('batch')">Batch / CSV</div>
+</div>
+
+<div id="panelPsat" class="card">
+  <label for="psatT">Temperature</label>
+  <div class="row">
+    <div class="field"><input type="number" id="psatT" placeholder="e.g. 25" step="0.1"></div>
+    <div class="field" style="max-width:90px;">
+      <select id="psatUnit"><option value="C">&deg;C</option><option value="K">K</option></select>
+    </div>
+  </div>
+  <button onclick="calcPsat()">Calculate p_sat</button>
+  <div class="error" id="psatError"></div>
+  <div class="result" id="psatResult"></div>
+</div>
+
+<div id="panelRh" class="card hidden">
+  <label for="rhT">Temperature</label>
+  <div class="row">
+    <div class="field"><input type="number" id="rhT" placeholder="e.g. 60" step="0.1"></div>
+    <div class="field" style="max-width:90px;">
+      <select id="rhTUnit"><option value="C">&deg;C</option><option value="K">K</option></select>
+    </div>
+  </div>
+  <label for="rhP">Water vapor partial pressure</label>
+  <div class="row">
+    <div class="field"><input type="number" id="rhP" placeholder="e.g. 1.57" step="0.001"></div>
+    <div class="field" style="max-width:150px;">
+      <select id="rhPUnit">
+        <option value="mbar">mbar</option>
+        <option value="kPa">kPa</option>
+        <option value="rh25">RH% @25&deg;C</option>
+        <option value="dp">Dew/frost point (&deg;C)</option>
+      </select>
+    </div>
+  </div>
+  <button onclick="calcRh()">Calculate RH%</button>
+  <div class="error" id="rhError"></div>
+  <div class="result" id="rhResult"></div>
+</div>
+
+<div id="panelBatch" class="card hidden">
+  <label>Temperature range (initial T, final T, delta T)</label>
+  <div class="row">
+    <div class="field"><input type="number" id="bStart" placeholder="Start &deg;C" step="0.1"></div>
+    <div class="field"><input type="number" id="bEnd" placeholder="End &deg;C" step="0.1"></div>
+    <div class="field"><input type="number" id="bStep" placeholder="Step" step="0.1" value="1"></div>
+  </div>
+  <label for="bP">Water vapor partial pressure (constant, isobaric)</label>
+  <div class="row">
+    <div class="field"><input type="number" id="bP" placeholder="e.g. 1.57" step="0.001"></div>
+    <div class="field" style="max-width:150px;">
+      <select id="bPUnit">
+        <option value="mbar">mbar</option>
+        <option value="kPa">kPa</option>
+        <option value="rh25">RH% @25&deg;C</option>
+        <option value="dp">Dew/frost point (&deg;C)</option>
+      </select>
+    </div>
+  </div>
+  <button onclick="calcBatch()">Generate table</button>
+  <div class="error" id="bError"></div>
+  <div id="bTableWrap" class="tablewrap hidden">
+    <table>
+      <thead><tr><th>T (&deg;C)</th><th>p_sat (mbar)</th><th>RH% (T)</th><th>RH% @25&deg;C</th></tr></thead>
+      <tbody id="bTbody"></tbody>
+    </table>
+  </div>
+  <button class="secondary hidden" id="bDownloadBtn" onclick="downloadCSV()" style="margin-top:0.7rem;">Download CSV</button>
+</div>
+
+<p class="note">
+IAPWS validity range: 0.01-373.9 &deg;C (273.16-647.10 K). Below 0 &deg;C, dew/frost point input uses the Buck (1996) ice saturation formula, valid to -80 &deg;C, since the IAPWS liquid formula only applies above the triple point.<br>
+"RH% @25&deg;C" expresses the absolute water content as the equivalent RH% it would give at 25 &deg;C - useful for comparing isobaric measurements across labs or with literature values, independent of the sample's actual temperature.
+</p>
+
+<div class="credits">Created by Jenny G. Vitillo (University of Insubria) with the assistance of Claude (Anthropic), 2026</div>
+
+<script>
+var lastCSV = null;
+
+function psatKPa(T_K){
+  var Tc=647.096, Pc=22064.0;
+  var a1=-7.85951783, a2=1.84408259, a3=-11.7866497, a4=22.6807411, a5=-15.9618719, a6=1.80122502;
+  var tau=1-T_K/Tc;
+  var lnp=(Tc/T_K)*(a1*tau+a2*Math.pow(tau,1.5)+a3*Math.pow(tau,3)+a4*Math.pow(tau,3.5)+a5*Math.pow(tau,4)+a6*Math.pow(tau,7.5));
+  return Pc*Math.exp(lnp);
+}
+function psatMbar(T_K){ return psatKPa(T_K)*10; }
+function psatIceMbar(T_C){
+  return 6.1115*Math.exp((23.036-T_C/333.7)*(T_C/(279.82+T_C)));
+}
+function toKelvin(val,unit){ return unit==='C' ? val+273.15 : val; }
+function checkRange(T_K){
+  if(isNaN(T_K)) return "Enter a valid temperature.";
+  if(T_K<273.16 || T_K>647.096) return "Temperature outside the IAPWS validity range (0.01-373.9 \u00b0C).";
+  return null;
+}
+function pH2OFromInput(pval,punit){
+  if(isNaN(pval)) return {err:"Enter a valid pressure/RH/dew point value."};
+  if(punit==='mbar') return {p:pval};
+  if(punit==='kPa') return {p:pval*10};
+  if(punit==='rh25'){
+    var psat25=psatMbar(298.15);
+    return {p:(pval/100)*psat25};
+  }
+  if(punit==='dp'){
+    if(pval>=0){ return {p:psatMbar(pval+273.15)}; }
+    else { return {p:psatIceMbar(pval)}; }
+  }
+}
+function switchTab(t){
+  document.getElementById('tabPsat').classList.toggle('active', t==='psat');
+  document.getElementById('tabRh').classList.toggle('active', t==='rh');
+  document.getElementById('tabBatch').classList.toggle('active', t==='batch');
+  document.getElementById('panelPsat').classList.toggle('hidden', t!=='psat');
+  document.getElementById('panelRh').classList.toggle('hidden', t!=='rh');
+  document.getElementById('panelBatch').classList.toggle('hidden', t!=='batch');
+}
+function calcPsat(){
+  var errEl=document.getElementById('psatError'), resEl=document.getElementById('psatResult');
+  errEl.classList.remove('show'); resEl.classList.remove('show');
+  var val=parseFloat(document.getElementById('psatT').value);
+  var unit=document.getElementById('psatUnit').value;
+  var T_K=toKelvin(val,unit);
+  var err=checkRange(T_K);
+  if(err){ errEl.textContent=err; errEl.classList.add('show'); return; }
+  var pmbar=psatMbar(T_K);
+  resEl.innerHTML='<div class="big">'+pmbar.toFixed(4)+' mbar</div>'+
+    '<div class="line">= '+(pmbar/10).toFixed(4)+' kPa</div>'+
+    '<div class="line">T = '+T_K.toFixed(2)+' K ('+(T_K-273.15).toFixed(2)+' \u00b0C)</div>';
+  resEl.classList.add('show');
+}
+function calcRh(){
+  var errEl=document.getElementById('rhError'), resEl=document.getElementById('rhResult');
+  errEl.classList.remove('show'); resEl.classList.remove('show');
+  var Tval=parseFloat(document.getElementById('rhT').value);
+  var Tunit=document.getElementById('rhTUnit').value;
+  var T_K=toKelvin(Tval,Tunit);
+  var err=checkRange(T_K);
+  if(err){ errEl.textContent=err; errEl.classList.add('show'); return; }
+  var pval=parseFloat(document.getElementById('rhP').value);
+  var punit=document.getElementById('rhPUnit').value;
+  var r=pH2OFromInput(pval,punit);
+  if(r.err){ errEl.textContent=r.err; errEl.classList.add('show'); return; }
+  var pH2O=r.p;
+  var psatT=psatMbar(T_K);
+  var rh=(pH2O/psatT)*100;
+  var rh25=(pH2O/psatMbar(298.15))*100;
+  resEl.innerHTML='<div class="big">RH = '+rh.toFixed(3)+' %</div>'+
+    '<div class="line">p_H2O = '+pH2O.toFixed(4)+' mbar (constant)</div>'+
+    '<div class="line">p_sat(T) = '+psatT.toFixed(4)+' mbar at '+(T_K-273.15).toFixed(2)+' \u00b0C</div>'+
+    '<div class="line">RH% @25\u00b0C (equivalent) = '+rh25.toFixed(3)+' %</div>';
+  resEl.classList.add('show');
+}
+function calcBatch(){
+  var errEl=document.getElementById('bError');
+  errEl.classList.remove('show');
+  document.getElementById('bTableWrap').classList.add('hidden');
+  document.getElementById('bDownloadBtn').classList.add('hidden');
+  var start=parseFloat(document.getElementById('bStart').value);
+  var end=parseFloat(document.getElementById('bEnd').value);
+  var step=parseFloat(document.getElementById('bStep').value);
+  if(isNaN(start)||isNaN(end)||isNaN(step)||step<=0){
+    errEl.textContent="Enter valid start, end and a positive step."; errEl.classList.add('show'); return;
+  }
+  var pval=parseFloat(document.getElementById('bP').value);
+  var punit=document.getElementById('bPUnit').value;
+  var r=pH2OFromInput(pval,punit);
+  if(r.err){ errEl.textContent=r.err; errEl.classList.add('show'); return; }
+  var pH2O=r.p;
+  var psat25=psatMbar(298.15);
+  var rows=[];
+  var dir = end>=start ? 1 : -1;
+  var n = Math.round(Math.abs(end-start)/step);
+  for(var i=0;i<=n;i++){
+    var T_C = start + dir*i*step;
+    var T_K = T_C+273.15;
+    if(T_K<273.16 || T_K>647.096){ continue; }
+    var psat = psatMbar(T_K);
+    var rh = (pH2O/psat)*100;
+    var rh25 = (pH2O/psat25)*100;
+    rows.push({T:T_C, psat:psat, rh:rh, rh25:rh25});
+  }
+  if(rows.length===0){
+    errEl.textContent="No valid points in this range (check IAPWS validity 0.01-373.9 \u00b0C)."; errEl.classList.add('show'); return;
+  }
+  var tbody=document.getElementById('bTbody');
+  tbody.innerHTML='';
+  rows.forEach(function(row){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+row.T.toFixed(2)+'</td><td>'+row.psat.toFixed(4)+'</td><td>'+row.rh.toFixed(3)+'</td><td>'+row.rh25.toFixed(3)+'</td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('bTableWrap').classList.remove('hidden');
+  document.getElementById('bDownloadBtn').classList.remove('hidden');
+  var csv='T_C,psat_mbar,RH_percent_at_T,RH_percent_equivalent_at_25C\n';
+  rows.forEach(function(row){
+    csv+=row.T.toFixed(2)+','+row.psat.toFixed(4)+','+row.rh.toFixed(3)+','+row.rh25.toFixed(3)+'\n';
+  });
+  lastCSV=csv;
+}
+async function downloadCSV(){
+  if(!lastCSV) return;
+  try{
+    var downloads = await claude.use("downloads");
+    if(downloads){
+      await downloads.save({filename:"isobaric_RH_table.csv", data:lastCSV});
+      return;
+    }
+  }catch(e){}
+  var blob=new Blob([lastCSV],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='isobaric_RH_table.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

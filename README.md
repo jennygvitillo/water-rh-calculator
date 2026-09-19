@@ -1,12 +1,41 @@
-# water-rh-calculator
-Web-based calculator for water vapor saturation pressure and relative humidity using the IAPWS (Wagner &amp; Pruss, 1993) formulation. Includes batch/CSV export for isobaric humidity programs (constant water vapor partial pressure across a temperature range).
+# Water vapor saturation pressure & RH% calculator
+
+A simple browser tool to calculate water vapor saturation pressure (p_sat) and relative humidity (RH%), based on the IAPWS formulation (Wagner & Pruss, 1993). Includes a batch mode to generate isobaric RH% tables (constant water vapor partial pressure across a temperature range) with CSV export.
 
 ## Quick start
 
 No installation needed — this is a single, self-contained HTML file.
 
-1. Download `index.html` from this repository (or clone the repo)
+1. Download `index.html` from this repository
 2. Double-click it, or open it with any web browser (Chrome, Firefox, Safari, Edge)
-3. That's it — the calculator runs entirely in your browser, no internet connection required after loading
+3. That's it — everything runs locally in your browser, no internet connection needed after the first load
 
-Alternatively, if this repository is hosted via GitHub Pages, just open the live link: `https://<username>.github.io/<repo-name>/`
+Or, if this repository is hosted via GitHub Pages, just open: `https://<username>.github.io/<repo-name>/`
+
+## What it does
+
+- **p_sat(T)**: enter a temperature (°C or K), get the water saturation vapor pressure
+- **RH%**: enter a temperature and a water vapor partial pressure (mbar, kPa, RH% at 25°C, or dew/frost point), get the relative humidity at that temperature
+- **Batch / CSV**: generate a full table over a temperature range at constant water vapor partial pressure (isobaric conditions), and export it as a CSV file
+
+## Formula
+
+Saturation pressure is calculated with the IAPWS equation for the vapor-liquid saturation curve of water:
+
+Wagner, W.; Pruß, A. *J. Phys. Chem. Ref. Data* **1993**, *22*, 783–787.
+
+Valid between 0.01 °C and 373.9 °C. Below 0 °C, dew/frost point inputs use the Buck (1996) ice saturation formula instead.
+
+## Citation
+
+If you use this tool in a publication, please cite it as:
+
+> [Your name], *[Tool name]* (GitHub repository), [year]. [DOI or URL]
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+## Author
+
+Jenny G. Vitillo (University of Insubria), developed with the assistance of Claude (Anthropic).
